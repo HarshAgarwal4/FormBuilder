@@ -1,8 +1,16 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { AppContext } from "../context/GlobalContext";
 
 const HomePage = () => {
     const navigate = useNavigate()
+    const {user} = useContext(AppContext)
+
+    useEffect(() =>{
+        if(user){
+            navigate('/dashboard')
+        }
+    }, [user])
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200">
             <div className="text-center">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AppContext } from "../context/GlobalContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "../services/axios";
 import { toast } from "react-toastify";
 
@@ -13,6 +13,7 @@ function Dashboard() {
   const [values, setValues] = useState({});
   const [localForm, setLocalForm] = useState(null);
   const [forms, setForms] = useState([]);
+  const navigate = useNavigate();
 
   async function fetchForms() {
     try {
@@ -55,6 +56,10 @@ function Dashboard() {
       console.error(err);
       toast.error("Server error");
     }
+  }
+
+  function getResponseOfForm(id) {
+    navigate(`/response/form/${id}`);
   }
 
   async function saveFormLocally(form) {
@@ -101,8 +106,6 @@ function Dashboard() {
           ? "Short Answer"
           : type === "textarea"
           ? "Paragraph"
-          : type === "file"
-          ? "Upload File"
           : "Option",
       placeholder: "",
       required: false,
@@ -111,8 +114,6 @@ function Dashboard() {
           ? ["Option 1", "Option 2"]
           : [],
       layout: "full",
-      fileTypes: type === "file" ? ["image/png", "image/jpeg", "application/pdf"] : [],
-      maxSizeMB: type === "file" ? 2 : null,
     };
     setLocalForm({ ...localForm, fields: [...localForm.fields, field] });
   }
@@ -212,9 +213,7 @@ function Dashboard() {
                 <div>
                   <h3 className="font-semibold">{f.title}</h3>
                   <p className="text-sm text-slate-500">{f.description}</p>
-                  <p className="mt-2 text-xs text-slate-400">
-                    Fields: {f.fields.length}
-                  </p>
+                  <p className="mt-2 text-xs text-slate-400">Fields: {f.fields.length}</p>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <button
@@ -234,6 +233,12 @@ function Dashboard() {
                     className="px-2 py-1 rounded bg-blue-500 text-white w-full sm:w-auto"
                   >
                     Share
+                  </button>
+                  <button
+                    onClick={() => getResponseOfForm(f._id)}
+                    className="px-2 py-1 rounded bg-blue-500 text-white w-full sm:w-auto"
+                  >
+                    View Response
                   </button>
                 </div>
               </div>
@@ -256,9 +261,7 @@ function Dashboard() {
                 />
                 <input
                   value={localForm.description}
-                  onChange={(e) =>
-                    setLocalForm({ ...localForm, description: e.target.value })
-                  }
+                  onChange={(e) => setLocalForm({ ...localForm, description: e.target.value })}
                   className="text-sm w-full text-slate-500"
                   placeholder="Form Description"
                 />
@@ -320,16 +323,14 @@ function Dashboard() {
                       placeholder="Label"
                       className="p-2 border rounded w-full"
                     />
-                    {field.type !== "file" && (
-                      <input
-                        value={field.placeholder}
-                        onChange={(e) =>
-                          updateField(field.id, { placeholder: e.target.value })
-                        }
-                        placeholder="Placeholder"
-                        className="p-2 border rounded w-full"
-                      />
-                    )}
+                    <input
+                      value={field.placeholder}
+                      onChange={(e) =>
+                        updateField(field.id, { placeholder: e.target.value })
+                      }
+                      placeholder="Placeholder"
+                      className="p-2 border rounded w-full"
+                    />
                     <label className="flex items-center space-x-2">
                       <input
                         type="checkbox"
@@ -341,6 +342,45 @@ function Dashboard() {
                       <span className="text-sm">Required</span>
                     </label>
                   </div>
+
+                  {/* Options editor for select/radio/checkbox */}
+                  {(field.type === "select" || field.type === "radio" || field.type === "checkbox") && (
+                    <div className="mt-3">
+                      <label className="text-sm font-medium">Options</label>
+                      <div className="space-y-2 mt-2">
+                        {field.options.map((opt, oi) => (
+                          <div key={oi} className="flex items-center gap-2">
+                            <input
+                              value={opt}
+                              onChange={(e) =>
+                                updateField(field.id, {
+                                  options: field.options.map((o, idx) => (idx === oi ? e.target.value : o)),
+                                })
+                              }
+                              className="p-2 border rounded w-full"
+                            />
+                            <button
+                              onClick={() =>
+                                updateField(field.id, { options: field.options.filter((_, idx) => idx !== oi) })
+                              }
+                              className="px-2 py-1 rounded bg-red-500 text-white"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        ))}
+
+                        <button
+                          onClick={() =>
+                            updateField(field.id, { options: [...field.options, `Option ${field.options.length + 1}`] })
+                          }
+                          className="mt-2 px-2 py-1 rounded bg-slate-100"
+                        >
+                          + Add option
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -349,23 +389,21 @@ function Dashboard() {
           <aside className="bg-white p-4 rounded shadow md:sticky md:top-4">
             <h4 className="font-semibold mb-2">Add Field</h4>
             <div className="flex flex-wrap gap-2">
-              {["text", "textarea", "select", "radio", "checkbox", "file"].map((type) => (
+              {['text', 'textarea', 'select', 'radio', 'checkbox'].map((type) => (
                 <button
                   key={type}
                   onClick={() => addField(type)}
                   className="px-3 py-1 rounded bg-slate-100 text-sm"
                 >
-                  {type === "text"
-                    ? "Short Answer"
-                    : type === "textarea"
-                    ? "Paragraph"
-                    : type === "select"
-                    ? "Dropdown"
-                    : type === "radio"
-                    ? "Radio"
-                    : type === "checkbox"
-                    ? "Checkboxes"
-                    : "File Upload"}
+                  {type === 'text'
+                    ? 'Short Answer'
+                    : type === 'textarea'
+                    ? 'Paragraph'
+                    : type === 'select'
+                    ? 'Dropdown'
+                    : type === 'radio'
+                    ? 'Radio'
+                    : 'Checkboxes'}
                 </button>
               ))}
             </div>
@@ -453,15 +491,8 @@ function Dashboard() {
                         {o}
                       </label>
                     ))}
-                  {f.type === "file" && (
-                    <input
-                      type="file"
-                      onChange={(e) =>
-                        setValues((p) => ({ ...p, [f.id]: e.target.files[0]?.name || "" }))
-                      }
-                      className="p-2 border rounded w-full"
-                    />
-                  )}
+
+                  <div className="mt-2" />
                 </div>
               ))}
               <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">

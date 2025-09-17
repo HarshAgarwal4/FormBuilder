@@ -8,6 +8,7 @@ import { userRoutes } from './routes/user.js';
 import { logoutRouter } from './routes/logout.js';
 import { fromRoutrer } from './routes/form.js';
 import { isLoggedIn } from './middlewares/auth.js';
+import { responseRouter } from './routes/response.js';
 dotenv.config()
 
 const app = express()
@@ -30,6 +31,7 @@ app.get('/' , (re,res) => {
 app.use('/' , userRoutes)
 app.use('/' , logoutRouter)
 app.use('/' , fromRoutrer)
+app.use('/' , responseRouter)
 
 mongoose.connect(process.env.DB_URL, {
     dbName: "FORM_BUILDER",

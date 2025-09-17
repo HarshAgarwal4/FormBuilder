@@ -7,7 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 function FormPage() {
     const { id } = useParams();
     const [form, setForm] = useState(null);
-    const { handleSubmit, control, register, setValue, watch } = useForm();
+    const { handleSubmit, control, register, setValue } = useForm();
 
     useEffect(() => {
         async function fetchForm() {
@@ -15,9 +15,8 @@ function FormPage() {
                 const res = await axios.get(`/form/${id}`);
                 if (res.status === 200 && res.data.status === 1) {
                     setForm(res.data.form);
-                    console.log(res.data.form.fields)
                     res.data.form.fields.forEach(f => {
-                        setValue(f._id, f.type === "checkbox" ? [] : "");
+                        setValue(f.label, f.type === "checkbox" ? [] : "");
                     });
                 }
             } catch (err) {
@@ -28,13 +27,17 @@ function FormPage() {
     }, [id, setValue]);
 
     const onSubmit = async (data) => {
-        console.log(data)
         try {
+            // only keep fields defined in form
+            const fieldLabels = form.fields.map(f => f.label);
+            const values = Object.fromEntries(
+                Object.entries(data).filter(([key]) => fieldLabels.includes(key))
+            );
+
             const payload = {
                 form: form._id,
-                values: data
+                values
             };
-            console.log("Form Submitted:", payload);
 
             const r = await axios.post('/submit/form', payload);
             if (r.status === 200) {
@@ -69,7 +72,7 @@ function FormPage() {
                                     <input
                                         type="text"
                                         placeholder={f.placeholder}
-                                        {...register(f.label , { required: f.required })}
+                                        {...register(f.label, { required: f.required })}
                                         className="p-2 border rounded w-full"
                                     />
                                 )}
