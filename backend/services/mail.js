@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 
 async function sendMail(email , subject , body) {
     const mailOptions = {
-        from: `"DTE PORTAL" <${process.env.myGMAIL}>`,
+        from: `"Form Builder" <${process.env.myGMAIL}>`,
         to: email,
         subject: subject,
         text: body
